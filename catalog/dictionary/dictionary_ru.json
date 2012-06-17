@@ -1,0 +1,31 @@
+{
+  "language": "ru",
+  "catalog": {
+    "shop": {"name": "Магазины", "description": "", "link": "http://wiki.openstreetmap.org/wiki/RU:Key:shop", "keywords": ""},
+    "shop-bakery": {"name": "Хлебный магазин", "description": "", "link": "http://wiki.openstreetmap.org/wiki/RU:Tag:shop%3Dbakery", "keywords": ""},
+    "shop-beauty": {"name": "Салон красоты", "description": "", "link": "http://wiki.openstreetmap.org/wiki/RU:Tag:shop%3Dbeauty", "keywords": ""},
+    "shop-books": {"name": "Книжный магазин", "description": "", "link": "http://wiki.openstreetmap.org/wiki/RU:Tag:shop%3Dbooks", "keywords": ""},
+    "shop-car_repair": {"name": "Автосервис", "description": "", "link": "http://wiki.openstreetmap.org/wiki/RU:Tag:shop%3Dcar_repair", "keywords": ""},
+    "shop-confectionery": {"name": "Кондитерская", "description": "", "link": "http://wiki.openstreetmap.org/wiki/RU:Tag:shop%3Dconfectionery", "keywords": ""},
+    "shop-supermarket": {"name": "Супермаркет", "description": "", "link": "http://wiki.openstreetmap.org/wiki/RU:Tag:shop%3Dsupermarket", "keywords": ""}
+  
+  },
+  "moretags": {
+    "second_hand": "Продажа б/у",
+    "atm": "Наличие банкомата"
+  },
+  "types": {
+    "null": "неизвестно",
+    "boolean": {
+      "true": "да",
+      "false": "нет",
+      "yes": "да",
+      "no": "нет"      
+    },
+    "second_hand": {
+      "yes": "да",
+      "only": "только б/у",
+      "no": "нет"      
+    }
+  }
+}
