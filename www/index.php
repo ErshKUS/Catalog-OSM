@@ -1,23 +1,6 @@
 <?php
 include_once ('include/functions.php');
-
-
-
-/*
-function err404($code=0) {
-  header("Status: 404 Not Found");
-  include_once '404.php';
-  exit();
-}
-
-function err500() {
-  header("Status: 500 Internal Server Error");
-  echo 'Ошибка на сервере.';
-  exit();
-}*/
-
 ?>
-
 
 <html>
   <head>
@@ -44,7 +27,7 @@ function err500() {
         <form id="contentform">
           <div>Уникальное имя: <input name="id"></div>
           <div id="fcParent">Категории: </div>
-          <div id="fcTags"><table></table></div>
+          <div id="fcTags">Теги: <table></table></div>
           <div>Выводимое имя: <input name="langname"></div>
           <div>Описание: <input name="langdescription"></div>
           <div>Ссылка подробное описание: <input name="langlink"></div>

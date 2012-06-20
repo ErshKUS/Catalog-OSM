@@ -1,16 +1,10 @@
-var cat={};
-
-function $_(id) { return document.getElementById(id); }
-
-//jQuery(function($) {
-  // Your code using failsafe $ alias here...
-//  alert('f');
-//});
-$(function () { cat.catmenutree(); });       
+var cat={parent:{}};
 
 $(function(){
+  cat.catmenutree();
+  
   var a = $('<a href="#" class="newcat"></a>');
-  a.click(cat.newcat);
+  a.click(cat.parent.choice);
   $("#fcParent").append(a);
 });
 
@@ -44,8 +38,6 @@ cat.getcatalog = function(results) {
     alert('Ошибка: ' + results.error);
   }
   else {
-    var cont = $_('center');
-    //var data=results.data;
     var form = $("#contentform")[0].elements;
     for (var i=0; i<$("#contentform")[0].elements.length; i++) {
       switch (form[i].type) {
@@ -59,7 +51,7 @@ cat.getcatalog = function(results) {
     }
     $("#fcParent>span").remove();
     for (el in results.data.parent){
-      cat.addcat(results.data.parent[el]);
+      cat.parent.add(results.data.parent[el]);
     }
     
   }
@@ -69,7 +61,7 @@ cat.getcatalog_err = function(jqXHR, textStatus, errorThrown) {
   alert('Ошибка: ' + textStatus + '<br />' + errorThrown.message);
 }
 
-cat.newcat = function(e) {
+cat.parent.choice = function(e) {
   $('#top').addClass('hiden');
   $('#content').addClass('hiden');
   var rDiv = $('<div id="rnewcat"></div>');
@@ -87,7 +79,7 @@ cat.newcat = function(e) {
   var aApply = $('<a href="#" class="buttonApply"></a>');
   aApply.click(function(){
     if (!cat.rAddID.text()) return;
-    cat.addcat(cat.rAddID.text());
+    cat.parent.add(cat.rAddID.text());
     removethis();
   });
   rDiv.append(aApply);
@@ -97,7 +89,7 @@ cat.newcat = function(e) {
   $("#center").append(rDiv);
 }
 
-cat.addcat = function(text) {
+cat.parent.add = function(text) {
   var span = $('<span></span>');
   span.text(text);
   var a = $('<a href="#" class="delcat"></a>');
