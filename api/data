@@ -1,0 +1,50 @@
+#!/usr/local/bin/python
+# -*- coding: utf8 -*-
+
+import cgi, sys, json
+import psycopg2
+import psycopg2.extras
+import db_config
+
+output={}
+
+def getcatalog():
+  getname = getvalues.getfirst('name','')
+  getlang = getvalues.getfirst('lang','')
+  if (getname=='' and getlang==''):
+    output['error']='incorrect variables in action=getcatalog'
+    return
+    
+    
+  cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+  cur.execute("""
+    SELECT poi_catalog.name as id, poi_catalog.parent, poi_catalog.tags, poi_catalog.moretags, poi_catalog.poi,
+      poi_dict.name as langname, poi_dict.description as langdescription, poi_dict.link as langlink, poi_dict.keywords as langkeywords
+    FROM
+      poi_catalog
+      LEFT JOIN poi_dict
+      ON poi_catalog.name=poi_dict.item
+        AND poi_dict.lang = %(getlang)s
+    WHERE
+      poi_catalog.name=%(getname)s
+    ;""", {'getname': getname, 'getlang': getlang})
+  output['data']=cur.fetchone()
+
+
+
+
+
+print "Content-type: text/javascript; Charset=Utf-8\nAccess-Control-Allow-Origin: *\n" # debug
+#print "Content-type: application/json; Charset=Utf-8\nAccess-Control-Allow-Origin: *\n" # production
+
+conn = psycopg2.connect(host=db_config.site_host, database=db_config.site_database, user=db_config.site_user, password=db_config.site_password)
+
+getvalues=cgi.FieldStorage()
+getaction = getvalues.getfirst('action','')
+output['action']=getaction
+if getaction == 'getcatalog':
+  getcatalog()
+else:
+  output['error']='wrong action'
+
+print json.dumps(output)
