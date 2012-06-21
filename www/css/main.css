@@ -79,13 +79,21 @@ a.delcat {
   margin-right: 0.5em;
   width: 8px;
 }
-a.newcat {
+a.add {
   background-image: url("../img/new_cat.png");
   background-repeat: no-repeat;
   display: inline-block;
   height: 16px;
   margin-right: 0.5em;
   width: 16px;
+}
+a.del {
+  background-image: url("../img/del_cat.png");
+  background-repeat: no-repeat;
+  display: inline-block;
+  height: 8px;
+  margin-left: 0.3em;
+  width: 8px;
 }
 a.buttonApply {
   background-image: url("../img/button_apply.png");

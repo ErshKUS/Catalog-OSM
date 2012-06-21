@@ -15,10 +15,9 @@ def getcatalog():
     output['error']='incorrect variables in action=getcatalog'
     return
     
-    
   cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
   cur.execute("""
-    SELECT poi_catalog.name as id, poi_catalog.parent, poi_catalog.tags, poi_catalog.moretags, poi_catalog.poi,
+    SELECT poi_catalog.name as id, poi_catalog.parent, array[akeys(poi_catalog.tags),avals(poi_catalog.tags)] as tags, poi_catalog.moretags, poi_catalog.poi,
       poi_dict.name as langname, poi_dict.description as langdescription, poi_dict.link as langlink, poi_dict.keywords as langkeywords
     FROM
       poi_catalog
@@ -38,6 +37,7 @@ print "Content-type: text/javascript; Charset=Utf-8\nAccess-Control-Allow-Origin
 #print "Content-type: application/json; Charset=Utf-8\nAccess-Control-Allow-Origin: *\n" # production
 
 conn = psycopg2.connect(host=db_config.site_host, database=db_config.site_database, user=db_config.site_user, password=db_config.site_password)
+#psycopg2.extras.register_hstore(conn)
 
 getvalues=cgi.FieldStorage()
 getaction = getvalues.getfirst('action','')

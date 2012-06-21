@@ -5,11 +5,13 @@ include_once ('include/functions.php');
 <html>
   <head>
     <title>Каталог объектов OSM</title>
-    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">  
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
     <link type="text/css" href="css/main.css" rel="stylesheet">
+    <link type="text/css" href="css/ui-lightness/jquery-ui-1.8.21.custom.css" rel="stylesheet" />
     <script type="text/javascript" src="js/jquery.js"></script>
     <script type="text/javascript" src="js/jquery.cookie.js"></script>
     <script type="text/javascript" src="js/jquery.jstree.js"></script>
+    <script type="text/javascript" src="js/jquery-ui-1.8.21.custom.min.js"></script>
     <script type="text/javascript" src="js/main.js"></script>
   </head>
   <body>
@@ -34,6 +36,14 @@ include_once ('include/functions.php');
           <div>Ключевые слова: <input name="langkeywords"></div>
           <div>Является POI: <input name="poi" type="checkbox"></div>
         </form>
+      </div>
+    </div>
+    <div style="display: none;">
+      <div id="dialog-parent" title="Выбор категории">
+        <p>Выбран: <span></span></p>
+      </div>
+      <div id="dialog-moretags" title="Выбор информационных тегов">
+        <p>Выбран: <span></span></p>
       </div>
     </div>
   </body>
