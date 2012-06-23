@@ -14,10 +14,13 @@ table {
 
 
 #leftpan {
+  background: none repeat scroll 0 0 white;
+  border-right: 1px solid #CCCCCC;
   float: left;
   height: 100%;
+  position: absolute;
   width: 350px;
-  border-right: 1px solid #CCCCCC;
+  z-index: 1002;
 }
 #leftpan div.header {
   padding: 15px;

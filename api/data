@@ -14,23 +14,46 @@ def getcatalog():
   if (getname=='' and getlang==''):
     output['error']='incorrect variables in action=getcatalog'
     return
-    
+
   cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
   cur.execute("""
-    SELECT poi_catalog.name as id, poi_catalog.parent, array[akeys(poi_catalog.tags),avals(poi_catalog.tags)] as tags, poi_catalog.moretags, poi_catalog.poi,
+    SELECT poi_catalog.name as id, tparent.parent,
+      array[akeys(poi_catalog.tags),avals(poi_catalog.tags)] as tags, poi_catalog.moretags, poi_catalog.poi,
       poi_dict.name as langname, poi_dict.description as langdescription, poi_dict.link as langlink, poi_dict.keywords as langkeywords
     FROM
       poi_catalog
       LEFT JOIN poi_dict
       ON poi_catalog.name=poi_dict.item
         AND poi_dict.lang = %(getlang)s
+      ,
+      (SELECT
+        Array[array_agg(t5.parent), array_agg(poi_dict.name)] as parent
+      FROM
+        (SELECT unnest(poi_catalog.parent) as parent
+        FROM
+          poi_catalog
+        WHERE
+          poi_catalog.name=%(getname)s) as t5
+        LEFT JOIN poi_dict
+        ON t5.parent=poi_dict.item
+          AND poi_dict.lang = %(getlang)s) as tparent
     WHERE
       poi_catalog.name=%(getname)s
     ;""", {'getname': getname, 'getlang': getlang})
   output['data']=cur.fetchone()
 
 
+def getmore():
+  getlang = getvalues.getfirst('lang','')
+  if (getlang==''):
+    output['error']='incorrect variables in action=getmore'
+    return
 
+  cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+  cur.execute("""
+
+  ;""", {'getlang': getlang})
+  output['data']=cur.fetchone()
 
 
 print "Content-type: text/javascript; Charset=Utf-8\nAccess-Control-Allow-Origin: *\n" # debug
@@ -44,6 +67,8 @@ getaction = getvalues.getfirst('action','')
 output['action']=getaction
 if getaction == 'getcatalog':
   getcatalog()
+elif getaction == 'getmore':
+  getmore()
 else:
   output['error']='wrong action'
 
