@@ -1,0 +1,15 @@
+﻿{
+  "rows":
+  [
+    {"id": "atm","cell":["atm","атм-тест"]},
+    {"id": "second_hand","cell":["second_hand", "секонд-хенд"]}
+  ],
+  "userdata":
+  {
+    "ver": "0.5",
+    "amount":3220,
+    "tax":342,
+    "total":3564,
+    "name":"Totals:"
+  }
+}

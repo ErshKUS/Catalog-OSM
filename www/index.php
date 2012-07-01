@@ -15,7 +15,7 @@ include_once ('include/functions.php');
     <script type="text/javascript" src="js/jquery-ui-1.8.21.custom.min.js"></script>
     <script type="text/javascript" src="js/main.js"></script>
     <script type="text/javascript" src="js/i18n/grid.locale-ru.js"></script>
-    <script type="text/javascript" src="js/jquery.jqgrid.min.js"></script>
+    <script type="text/javascript" src="js/jquery.jqGrid.src.js"></script>
   </head>
   <body>
     <div id="leftpan">
@@ -29,16 +29,18 @@ include_once ('include/functions.php');
         </div>
       </div>
       <div id="content">
+        <div class="ui-state-error hide" id="fcError"></div>
         <form id="contentform">
-          <div>Уникальное имя: <input name="id"></div>
+          <div id="fcId">Уникальное имя: <input name="id"></div>
           <div id="fcParent">Категории: </div>
           <div id="fcTags">Теги: <table></table></div>
           <div>Выводимое имя: <input name="langname"></div>
           <div>Описание: <input name="langdescription"></div>
-          <div>Ссылка подробное описание: <input name="langlink"></div>
+          <div>Ссылка на подробное описание: <input name="langlink"></div>
           <div>Ключевые слова: <input name="langkeywords"></div>
           <div>Является POI: <input name="poi" type="checkbox"></div>
           <div id="fcMore">Свойства: <table></table></div>
+          <div id="fcButton"><input type="submit"><div>
         </form>
       </div>
     </div>
@@ -47,7 +49,10 @@ include_once ('include/functions.php');
         <p>Выбран: <span></span></p>
       </div>
       <div id="dialog-moretags" title="Выбор информационных тегов">
-        <p>Выбран: <span></span></p>
+        <table id="more_grid"></table>
+        <div id="more_pager"></div>
+        <table id="moreval_grid"></table>
+        <div id="moreval_pager"></div>
       </div>
     </div>
   </body>

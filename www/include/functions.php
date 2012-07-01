@@ -32,11 +32,25 @@ function ins_catalog($conn, $lang) {
       $firstclass = ' id="catalog-list" class="sample-menu" ';
     }
     else {
-      $where = "'$name'= any(parent)";
+      $where = "'$name'= any(poi_catalog.parent)";
       $firstclass = '';
     }
-    $result = pg_query($conn, "SELECT \"name\", \"name_$lang\" FROM poi_catalog WHERE $where ORDER BY \"name_$lang\"") ;// or die(Err500());
-    //$arr = pg_fetch_all($result);
+    //$result = pg_query($conn, "SELECT poi_catalog.name, poi_catalog.name_$lang FROM poi_catalog WHERE $where ORDER BY poi_catalog.name_$lang") ;// or die(Err500());
+    $query = <<<QUERY
+      SELECT poi_catalog.name, poi_dict.name
+      FROM
+        poi_catalog
+        LEFT JOIN poi_dict
+        ON poi_catalog.name=poi_dict.item
+          AND poi_dict.type = 'c'
+          AND poi_dict.lang = '{$lang}'
+      WHERE
+        {$where}
+      ORDER BY
+        poi_dict.name
+QUERY;
+    $result = pg_query($conn, $query) ;// or die(Err500());
+   //$arr = pg_fetch_all($result);
     //print $arr[0]['name'];
     if (pg_num_rows($result)) {
       print "<ul$firstclass>";

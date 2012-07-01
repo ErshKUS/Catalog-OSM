@@ -1,0 +1,48 @@
+﻿<html>
+  <head>
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+    <link type="text/css" href="css/main.css" rel="stylesheet" />
+    <link type="text/css" href="css/ui-lightness/jquery-ui-1.8.21.custom.css" rel="stylesheet" />
+    <link type="text/css" href="css/ui.jqgrid.css" rel="stylesheet" />
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/jquery-ui-1.8.21.custom.min.js"></script>
+    <script type="text/javascript" src="js/i18n/grid.locale-ru.js"></script>
+    <script type="text/javascript" src="js/jquery.jqGrid.min.js"></script>
+  </head>
+  <body>
+    <table id="more_grid"></table>
+    <div id="more_pager"></div>
+    
+    
+    <script type="text/javascript">
+      $(function(){
+        jQuery("#more_grid").jqGrid({
+            url:'http://ersh.homelinux.com:8091/more.json',
+            datatype: "json",
+            mtype: "GET",
+            colNames:['ID','Name','email','note','stock'],
+            colModel:[
+               {name:'id',width:50, sorttype:"int", editable: true},
+               {name:'name',label:'Name', width:150,editable: true},
+               {name:'email',label:'Email', width:150,editable: true,formatter:'email'},
+               {name:'note',label:'Notes', width:100, sortable:false,editable: true,edittype:"textarea", editoptions:{rows:"2",cols:"20"}} ,
+               {name:'stock',label:'Stock', width:60, align:"center", editable: true,formatter:'checkbox',edittype:"checkbox"},
+                 
+            ],
+                  sortname: 'id',
+                  sortorder: "asc",
+            loadonce: true,
+                  
+                 jsonReader: {
+                  repeatitems: false
+            }
+        });
+        
+        
+        
+        
+      });
+    
+    </script>
+  </body>
+</html>

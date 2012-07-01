@@ -1,12 +1,46 @@
 #!/usr/local/bin/python
 # -*- coding: utf8 -*-
 
-import cgi, sys, json
+import cgi, sys, json, re
 import psycopg2
 import psycopg2.extras
 import db_config
 
 output={}
+
+def gettree():
+  getname = getvalues.getfirst('name','')
+  getlang = getvalues.getfirst('lang','')
+  if (getlang==''):
+    output['error']='incorrect variables in action=gettree'
+    return
+  if (re.search('(?![\w-]).',getname) is not None):
+    output['error']='name only (a-z A-Z 0-9 - _), action=gettree'
+    return
+
+  if (getname==''):
+    where = 'poi_catalog.parent is null'
+  else:
+    where = "'%(getname)s' = any(poi_catalog.parent)" % {"getname":getname}
+
+  cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+  cur.execute("""
+    SELECT poi_catalog.name as id, poi_dict.name as name
+    FROM
+      poi_catalog
+      LEFT JOIN poi_dict
+      ON poi_catalog.name=poi_dict.item
+        AND poi_dict.type = 'o'
+        AND poi_dict.lang = %(getlang)s
+    WHERE """+where+"""
+    ORDER BY
+      poi_dict.name
+    ;""", {'getlang': getlang})
+  data = []
+  for record in cur:
+    data.append(record)
+  output['data']=data
+
 
 def getcatalog():
   getname = getvalues.getfirst('name','')
@@ -24,6 +58,7 @@ def getcatalog():
       poi_catalog
       LEFT JOIN poi_dict
       ON poi_catalog.name=poi_dict.item
+        AND poi_dict.type = 'o'
         AND poi_dict.lang = %(getlang)s
       ,
       (SELECT
@@ -36,28 +71,141 @@ def getcatalog():
           poi_catalog.name=%(getname)s) as t5
         LEFT JOIN poi_dict
         ON t5.parent=poi_dict.item
+          AND poi_dict.type = 'o'
           AND poi_dict.lang = %(getlang)s) as tparent
     WHERE
       poi_catalog.name=%(getname)s
     ;""", {'getname': getname, 'getlang': getlang})
   output['data']=cur.fetchone()
 
+def setcatalog():
+  getname = getvalues.getfirst('name','')
+  getlang = getvalues.getfirst('lang','')
+
+
 
 def getmore():
   getlang = getvalues.getfirst('lang','')
   if (getlang==''):
     output['error']='incorrect variables in action=getmore'
+    print json.dumps(output)
     return
 
   cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
   cur.execute("""
-
+    SELECT poi_moretags.name as id, poi_dict.name as name, poi_moretags.type as type, poi_moretags.class as class,
+    poi_dict.description as description, poi_dict.link as link, poi_dict.keywords as keywords
+    FROM
+      poi_moretags
+      LEFT JOIN poi_dict
+      ON poi_moretags.name=poi_dict.item
+        AND poi_dict.type = 'm'
+        AND poi_dict.lang = %(getlang)s
   ;""", {'getlang': getlang})
-  output['data']=cur.fetchone()
+  data = {}
+  data['rows']=[]
+  for record in cur:
+    data['rows'].append(record)
+  #data['rows']=rows
+  print json.dumps(data)
+
+def editmore():
+  getval={}
+  getval['oper'] = getvalues.getfirst('oper','')
+
+  getval['id'] = getvalues.getfirst('id','')
+  if (re.search('(?![\w-]).',getval['id']) is not None):
+    output['error']="ID only a-z A-Z 0-9 - _"
+    return
+
+  getval['name'] = getvalues.getfirst('name','')
+  getval['type'] = getvalues.getfirst('type','')
+  getval['class'] = getvalues.getfirst('class','')
+  for name in ['name','type','class']:
+    if (getval[name] == ''):
+      output['error']=("%(name)s is not null"%{'name':name})
+      return
+  getval['description'] = getvalues.getfirst('description','')
+  getval['link'] = getvalues.getfirst('link','')
+  getval['keywords'] = getvalues.getfirst('keywords','')
+
+def getmoreval():
+  getclass = getvalues.getfirst('class','')
+  getlang = getvalues.getfirst('lang','')
+  if (getclass=='' and getlang==''):
+    output['error']='incorrect variables in action=getmoreval'
+    print json.dumps(output)
+    return
+
+  cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+  cur.execute("""
+    SELECT poi_class.value, poi_dict.name as name, poi_dict.id as id_dict
+    FROM
+      poi_class
+      LEFT JOIN poi_dict
+      ON poi_class.name=poi_dict.item
+        AND poi_class.value=poi_dict.value
+        AND poi_dict.type = 'c'
+        AND poi_dict.lang = %(getlang)s
+    WHERE poi_class.name = %(getclass)s
+    ORDER BY poi_class.value ASC
+  ;""", {'getclass': getclass, 'getlang': getlang})
+  data = {}
+  data['rows']=[]
+  for record in cur:
+    data['rows'].append(record)
+  #data['rows']=rows
+  print json.dumps(data)
+
+def setmoreval():
+  getval={}
+  getval['oper'] = getvalues.getfirst('oper','')
+  getval['lang'] = getvalues.getfirst('lang','')
+  getval['class'] = getvalues.getfirst('class','')
+  getval['value'] = getvalues.getfirst('value','')
+  for name in ['lang','class','value']:
+    if (getval[name] == ''):
+      output['error']=("%(name)s is not null"%{'name':name})
+      return
+  getval['name'] = getvalues.getfirst('name','')
+  getval['id'] = getvalues.getfirst('id','')
+
+  cur = conn.cursor()
+
+  try:
+    if ( getval['oper'] == 'add' ):
+      cur.execute("""
+        INSERT INTO poi_class(name, value)
+          VALUES ( %(class)s, %(value)s );
+        INSERT INTO poi_dict(lang, item, name, type, value)
+          VALUES ( %(lang)s, %(class)s, %(name)s, 'c', %(value)s );
+      ;""", {'lang': getval['lang'], 'class': getval['class'], 'value': getval['value'], 'name': getval['name'] })
+    elif ( getval['oper'] == 'edit' ):
+      for name in ['name','id']:
+        if (getval[name] == ''):
+          output['error']=("%(name)s is not null"%{'name':name})
+          return
+      cur.execute("""
+        UPDATE poi_class
+           SET "value"=%(value)s
+          FROM poi_dict
+          WHERE poi_class.name=%(class)s
+           AND poi_dict.id=%(id)s
+           AND poi_dict.value=poi_class.value;
+        UPDATE poi_dict
+           SET "value"=%(value)s, "name"=%(name)s 
+          WHERE id=%(id)s;           
+      ;""", {'lang': getval['lang'], 'class': getval['class'], 'value': getval['value'], 'name': getval['name'], 'id': getval['id'] })
+      
+    conn.commit()
+  except Exception, e:
+    output['error'] = str(e) #str(sys.exc_info()[1])
+    #raise
+  #output['data']=getval['oper']
 
 
-print "Content-type: text/javascript; Charset=Utf-8\nAccess-Control-Allow-Origin: *\n" # debug
-#print "Content-type: application/json; Charset=Utf-8\nAccess-Control-Allow-Origin: *\n" # production
+#print "Content-type: text/javascript; Charset=Utf-8\nAccess-Control-Allow-Origin: *\n" # debug
+print "Content-type: application/json; Charset=Utf-8\nAccess-Control-Allow-Origin: *\n" # production
 
 conn = psycopg2.connect(host=db_config.site_host, database=db_config.site_database, user=db_config.site_user, password=db_config.site_password)
 #psycopg2.extras.register_hstore(conn)
@@ -65,11 +213,20 @@ conn = psycopg2.connect(host=db_config.site_host, database=db_config.site_databa
 getvalues=cgi.FieldStorage()
 getaction = getvalues.getfirst('action','')
 output['action']=getaction
-if getaction == 'getcatalog':
+if getaction == 'gettree':
+  gettree()
+elif getaction == 'getcatalog':
   getcatalog()
 elif getaction == 'getmore':
   getmore()
+elif getaction == 'editmore':
+  editmore()
+elif getaction == 'getmoreval':
+  getmoreval()
+elif getaction == 'setmoreval':
+  setmoreval()
 else:
   output['error']='wrong action'
 
-print json.dumps(output)
+if (getaction <> 'getmore' and getaction <> 'getmoreval'):
+  print json.dumps(output)
