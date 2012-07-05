@@ -25,7 +25,7 @@ def gettree():
 
   cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
   cur.execute("""
-    SELECT poi_catalog.name as id, poi_dict.name as name
+    SELECT poi_catalog.id as id, poi_catalog.name as name, poi_dict.name as langname
     FROM
       poi_catalog
       LEFT JOIN poi_dict
@@ -51,8 +51,8 @@ def getcatalog():
 
   cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
   cur.execute("""
-    SELECT poi_catalog.name as id, tparent.parent,
-      array[akeys(poi_catalog.tags),avals(poi_catalog.tags)] as tags, poi_catalog.moretags, poi_catalog.poi,
+    SELECT poi_catalog.id as id, poi_catalog.name as name, tparent.parent, tmore.moretags,
+      array[akeys(poi_catalog.tags),avals(poi_catalog.tags)] as tags, poi_catalog.poi,
       poi_dict.name as langname, poi_dict.description as langdescription, poi_dict.link as langlink, poi_dict.keywords as langkeywords
     FROM
       poi_catalog
@@ -73,14 +73,35 @@ def getcatalog():
         ON t5.parent=poi_dict.item
           AND poi_dict.type = 'o'
           AND poi_dict.lang = %(getlang)s) as tparent
+      ,
+      (SELECT
+        Array[array_agg(t6.moretags), array_agg(poi_dict.name)] as moretags
+      FROM
+        (SELECT unnest(poi_catalog.moretags) as moretags
+        FROM
+          poi_catalog
+        WHERE
+          poi_catalog.name=%(getname)s) as t6
+        LEFT JOIN poi_dict
+        ON t6.moretags=poi_dict.item
+          AND poi_dict.type = 'm'
+          AND poi_dict.lang = %(getlang)s) as tmore
     WHERE
       poi_catalog.name=%(getname)s
     ;""", {'getname': getname, 'getlang': getlang})
   output['data']=cur.fetchone()
 
 def setcatalog():
-  getname = getvalues.getfirst('name','')
-  getlang = getvalues.getfirst('lang','')
+  getjsondata = getvalues.getfirst('jsondata','')
+  if (getjsondata == ''):
+    output['error']='incorrect variable jsondata'
+    return
+  
+  data=json.loads(getjsondata)
+  
+  output['lang']=data["lang"]
+  #gettt = getvalues.getlist('tt[]')
+  #output['q']=getvalues
 
 
 
@@ -93,8 +114,9 @@ def getmore():
 
   cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
   cur.execute("""
-    SELECT poi_moretags.name as id, poi_dict.name as name, poi_moretags.type as type, poi_moretags.class as class,
-    poi_dict.description as description, poi_dict.link as link, poi_dict.keywords as keywords
+    SELECT poi_moretags.id as id, poi_moretags.name as name, poi_dict.name as langname, poi_moretags.type as type,
+        poi_moretags.class as class, poi_moretags.tag as tag,
+      poi_dict.description as description, poi_dict.link as link, poi_dict.keywords as keywords
     FROM
       poi_moretags
       LEFT JOIN poi_dict
@@ -109,25 +131,62 @@ def getmore():
   #data['rows']=rows
   print json.dumps(data)
 
-def editmore():
+def setmore():
   getval={}
   getval['oper'] = getvalues.getfirst('oper','')
-
-  getval['id'] = getvalues.getfirst('id','')
-  if (re.search('(?![\w-]).',getval['id']) is not None):
-    output['error']="ID only a-z A-Z 0-9 - _"
-    return
-
   getval['name'] = getvalues.getfirst('name','')
+  if (re.search('(?![\w-]).',getval['name']) is not None):
+    output['error']="Name only a-z A-Z 0-9 - _"
+    return
+  getval['lang'] = getvalues.getfirst('lang','')
+  getval['langname'] = getvalues.getfirst('langname','')
   getval['type'] = getvalues.getfirst('type','')
   getval['class'] = getvalues.getfirst('class','')
-  for name in ['name','type','class']:
+  getval['tag'] = getvalues.getfirst('tag','')
+  for name in ['name','lang','type','class','tag']:
     if (getval[name] == ''):
       output['error']=("%(name)s is not null"%{'name':name})
       return
   getval['description'] = getvalues.getfirst('description','')
   getval['link'] = getvalues.getfirst('link','')
   getval['keywords'] = getvalues.getfirst('keywords','')
+  getval['id'] = getvalues.getfirst('id','')
+  
+  cur = conn.cursor()
+  try:
+    if ( getval['oper'] == 'add' ):
+      cur.execute("""
+        INSERT INTO poi_moretags("name", "class", tag, "type")
+          VALUES (%(name)s, %(class)s, %(tag)s, %(type)s);
+        INSERT INTO poi_dict(lang, item, "name", description, link, keywords, "type")
+          VALUES (%(lang)s, %(name)s, %(langname)s, %(description)s, %(link)s, %(keywords)s, 'm');
+      ;""", {'lang': getval['lang'], 'name': getval['name'], 'langname': getval['langname'], 'type': getval['type'], 'class': getval['class'], 'tag': getval['tag'], 'description': getval['description'], 'link': getval['link'], 'keywords': getval['keywords'] })
+    elif ( getval['oper'] == 'edit' ):
+      for name in ['langname','id']:
+        if (getval[name] == ''):
+          output['error']=("%(name)s is not null"%{'name':name})
+          return
+      cur.execute("""
+        UPDATE poi_dict
+          SET item=%(name)s, "name"=%(langname)s, description=%(description)s, link=%(link)s, keywords=%(keywords)s
+          FROM
+            poi_moretags
+          WHERE
+            poi_moretags.id=%(id)s
+            AND poi_moretags.name=poi_dict.item
+            AND poi_dict.type='m'
+            AND poi_dict.lang=%(lang)s;
+        UPDATE poi_moretags
+            SET "name"=%(name)s, "class"=%(class)s, tag=%(tag)s, "type"=%(type)s
+          WHERE 
+            id=%(id)s;            
+      ;""", {'lang': getval['lang'], 'name': getval['name'], 'langname': getval['langname'], 'type': getval['type'], 'class': getval['class'], 'tag': getval['tag'], 'description': getval['description'], 'link': getval['link'], 'keywords': getval['keywords'], 'id': getval['id'] })      
+    
+    conn.commit()
+  except Exception, e:
+    output['error'] = str(e)
+  
+  
 
 def getmoreval():
   getclass = getvalues.getfirst('class','')
@@ -171,7 +230,6 @@ def setmoreval():
   getval['id'] = getvalues.getfirst('id','')
 
   cur = conn.cursor()
-
   try:
     if ( getval['oper'] == 'add' ):
       cur.execute("""
@@ -217,10 +275,12 @@ if getaction == 'gettree':
   gettree()
 elif getaction == 'getcatalog':
   getcatalog()
+elif getaction == 'setcatalog':
+  setcatalog()
 elif getaction == 'getmore':
   getmore()
-elif getaction == 'editmore':
-  editmore()
+elif getaction == 'setmore':
+  setmore()
 elif getaction == 'getmoreval':
   getmoreval()
 elif getaction == 'setmoreval':

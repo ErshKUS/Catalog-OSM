@@ -1,4 +1,4 @@
-var cat={parent:{}, tags:{}, more:{}, form:{}};
+var cat={p:{}, parent:{}, tags:{}, more:{}, form:{}};
 
 $(function(){
   cat.catmenutree();
@@ -18,28 +18,53 @@ $(function(){
   $("#fcMore").append(a);
 
   $("#fcButton>input").button();
-
   $("#contentform").submit(cat.form.submit);
 
 });
 
 cat.form.submit = function() {
   $("#fcError").addClass('hide');
-  id=$("#fcId [name=id]").val();
-  if (id=='') {
+  name=$("#fcId [name=name]").val();
+  if (name=='') {
     cat.form.suberr("не указано '"+$("#fcId").text()+"'");
     return false;
   }
-
-  $.getJSON('/api/data',
-    {action: 'setcatalog',
-      lang: $("#lang>[name=lang]").val(),
-      name: id,
-      langname: $("#contentform [name=langname]").val(),
-      langdescription: $("#contentform [name=langdescription]").val(),
-      langlink: $("#contentform [name=langlink]").val(),
-      langkeywords: $("#contentform [name=langkeywords]").val(),
-      poi: $("#contentform [name=poi]").val()
+  pParent=[];
+  q1=$('#fcParent>span');
+  for (i=0; i<q1.length; i++) {pParent[i]=q1[i].value;}
+  
+  pTags={};
+  q1=$("#fcTags tr");
+  for (i=0; i<q1.length; i++) {
+    pKey=$("td input.tagkey",q1[i]).val()
+    pVal=$("td input.tagvalue",q1[i]).val()
+    pTags[pKey]= pVal;
+  }
+  
+  pMore=[];
+  q1=$("#fcMore tr");
+  for (i=0; i<q1.length; i++) {
+    pMore[i]=$("td.moreid",q1[i]).text()
+  }
+  
+  var data={
+    lang: $("#lang>[name=lang]").val(),
+    id: cat.p.id,
+    name: name,
+    parent: pParent,
+    tags: pTags,
+    langname: $("#contentform [name=langname]").val(),
+    langdescription: $("#contentform [name=langdescription]").val(),
+    langlink: $("#contentform [name=langlink]").val(),
+    langkeywords: $("#contentform [name=langkeywords]").val(),
+    poi: $("#contentform [name=poi]").val(),
+    moretags: pMore
+  }
+  
+  $.post('/api/data',
+    {
+      action: 'setcatalog',
+      jsondata: $.toJSON(data)
     },
     function(results){
       if (results.error) {
@@ -78,15 +103,15 @@ cat.catmenutree = function () {
               var nodeId = "";
               var url = "http://ersh.homelinux.com:8091/api/data?action=gettree&lang="+$("#lang>[name=lang]").val()+"&name=";
               if (node != -1){
-                  url = url + node.attr('id');
+                  url = url + node.attr('name');
               }
               return url;
           },
           "success": function (new_data) {
             var data=[];
             for (i in new_data.data){
-              var name = new_data.data[i].name || '('+new_data.data[i].id+')'
-              data.push({data: name, attr:{id: new_data.data[i].id}, state: "closed"});
+              var langname = new_data.data[i].langname || '('+new_data.data[i].name+')'
+              data.push({data: langname, attr:{id: new_data.data[i].id, name: new_data.data[i].name}, state: "closed"});
             }
             return data;
           }
@@ -101,7 +126,7 @@ cat.catmenutree = function () {
       else {
         $.getJSON('/api/data',
           {action: 'getcatalog',
-            name: data.rslt.obj.attr("id"),
+            name: data.rslt.obj.attr("name"),
             lang: $("#lang>[name=lang]").val()},
           cat.getcatalog)
         .error(cat.getcatalog_err);
@@ -115,6 +140,8 @@ cat.getcatalog = function(results) {
     alert('Ошибка: ' + results.error);
   }
   else {
+    cat.p.id=results.data.id;
+  
     var form = $("#contentform")[0].elements;
     for (var i=0; i<$("#contentform")[0].elements.length; i++) {
       switch (form[i].type) {
@@ -135,8 +162,8 @@ cat.getcatalog = function(results) {
       cat.tags.add({tkey:results.data.tags[0][el],tvalue:results.data.tags[1][el]});
     }
     $("#fcMore>table>*").remove();
-    for (el in results.data.moretags){
-      cat.more.add({tid:results.data.moretags[el]});
+    for (el in results.data.moretags[0]){
+      cat.more.add({tid:results.data.moretags[0][el], tname:results.data.moretags[1][el]});
     }
 
   }
@@ -211,13 +238,15 @@ cat.more.choice = function(e) {
       url:'http://ersh.homelinux.com:8091/api/data?action=getmore&lang='+$("#lang>[name=lang]").val(),
       datatype: "json",
       mtype: "POST",
-      colNames:['','ID','Name','Type','Class','Description','Link (url)','Keywords'],
+      colNames:['','','Name','Name lang','Type','Class','Tag (key)','Description','Link (url)','Keywords'],
       colModel:[
         {name:'check', index:'check', width:15, editable:false, search:true, edittype:'checkbox', editoptions:{value:"True:False"}, formatter:"checkbox", formatoptions:{disabled:false}},
-        {name:'id', index:'id', width:55, editable:true},
-        {name:'name', index:'name asc', width:120, editable:true},
-        {name:'type', index:'type', width:120, editable:true},
+        {name:'id', index:'id', hidden:true, key:true},
+        {name:'name', index:'name', width:55, editable:true},
+        {name:'langname', index:'langname asc', width:120, editable:true},
+        {name:'type', index:'type', width:120, editable:true, edittype:'select', editoptions:{value:{period:'period',number:'number',namelang:'namelang',translate:'translate'}}},
         {name:'class', index:'class', width:120, editable:true},
+        {name:'tag', index:'tag', width:120, editable:true},
         {name:'description', index:'description', width:120, editable:true, edittype:"textarea", editoptions:{rows:"2", cols:"20"}},
         {name:'link', index:'link', width:120,editable:true},
         {name:'keywords', index:'keywords', width:120,editable:true}
@@ -233,7 +262,7 @@ cat.more.choice = function(e) {
       viewrecords: true,
       modal: false,
       jsonReader: { repeatitems: false },
-      editurl:"http://ersh.homelinux.com:8091/api/data?action=editmore&lang="+$("#lang>[name=lang]").val(),
+      editurl:"http://ersh.homelinux.com:8091/api/data?action=setmore&lang="+$("#lang>[name=lang]").val(),
       sortorder: "desc",
       loadComplete: function(){
         $('#more_grid [aria-describedby=more_grid_check]>input').change(function(){
@@ -253,27 +282,31 @@ cat.more.choice = function(e) {
         $('#gbox_moreval_grid').removeClass('hide');
         return true;
       }
-      //subGrid: true,
-      //subGrid: {repeatitems: false},
-      //subGridOptions: {repeatitems: false},
-      //subGridUrl: 'http://ersh.homelinux.com:8091/api/data?action=getmoreval&lang='+$("#lang>[name=lang]").val(),
-      //subGridModel: [{
-      //  name:['value','name'],
-      //  width:[80,80],
-      //  params:['class']
-      //}]
   });
   $("#more_grid").jqGrid('navGrid','#more_pager',
     {edit:true,add:true,del:false,search:false,refresh:false},
     { //edit
-      closeAfterAdd : true, clearAfterAdd : false,
+      closeAfterEdit: true,
       afterSubmit: function (response, postdata) {
+        var success = true;
+        var message = ""
+        var json = eval('(' + response.responseText + ')');
+        if(json.errors) {
+          success = false;
+          for(i=0; i < json.errors.length; i++) {
+            message += json.errors[i] + '<br/>';
+          }
+        }
+        if(json.error) {
+          success = false;
+          message +=json.error;
+        }
         $(this).jqGrid('setGridParam', {datatype:'json'});
-        return [true,'']; // no error
+        return [success,message];
       }
     },
     { //add
-      closeAfterAdd : true, clearAfterAdd : false,
+      closeAfterAdd : true,
       afterSubmit: function (response, postdata) {
         var success = true;
         var message = ""
@@ -298,7 +331,6 @@ cat.more.choice = function(e) {
 
 
   $("#moreval_grid").jqGrid({
-      //url:'http://ersh.homelinux.com:8091/api/data?action=getmoreval&class=second_hand&lang='+$("#lang>[name=lang]").val(),
       url:'http://ersh.homelinux.com:8091/api/data?action=getmoreval&lang='+$("#lang>[name=lang]").val(),
       datatype: "json",
       mtype: "POST",
@@ -330,6 +362,7 @@ cat.more.choice = function(e) {
     {edit:true,add:true,del:false,search:false,refresh:false},
     { //edit
       //closeAfterAdd : true, clearAfterAdd : false,
+      closeAfterEdit: true,
       afterSubmit: function (response, postdata) {
         var success = true;
         var message = ""
@@ -383,7 +416,7 @@ cat.more.choice = function(e) {
         for (i in pData) {
           if (pData[i].check=='True') {
             check = true;
-            cat.more.add({tid:pData[i].id,tname:pData[i].name});
+            cat.more.add({tid:pData[i].name,tname:pData[i].langname});
           }
         }
         if (check)

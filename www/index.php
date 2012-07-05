@@ -10,6 +10,7 @@ include_once ('include/functions.php');
     <link type="text/css" href="css/ui-lightness/jquery-ui-1.8.21.custom.css" rel="stylesheet" />
     <link type="text/css" href="css/ui.jqgrid.css" rel="stylesheet" />
     <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/jquery.json-2.3.min.js"></script>
     <script type="text/javascript" src="js/jquery.cookie.js"></script>
     <script type="text/javascript" src="js/jquery.jstree.js"></script>
     <script type="text/javascript" src="js/jquery-ui-1.8.21.custom.min.js"></script>
@@ -31,7 +32,7 @@ include_once ('include/functions.php');
       <div id="content">
         <div class="ui-state-error hide" id="fcError"></div>
         <form id="contentform">
-          <div id="fcId">Уникальное имя: <input name="id"></div>
+          <div id="fcName">Уникальное имя: <input name="name"></div>
           <div id="fcParent">Категории: </div>
           <div id="fcTags">Теги: <table></table></div>
           <div>Выводимое имя: <input name="langname"></div>
@@ -40,7 +41,7 @@ include_once ('include/functions.php');
           <div>Ключевые слова: <input name="langkeywords"></div>
           <div>Является POI: <input name="poi" type="checkbox"></div>
           <div id="fcMore">Свойства: <table></table></div>
-          <div id="fcButton"><input type="submit"><div>
+          <div id="fcButton"><input type="submit" value="Сохранить"><div>
         </form>
       </div>
     </div>
